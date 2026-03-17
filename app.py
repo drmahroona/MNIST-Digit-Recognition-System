@@ -14,7 +14,6 @@ import time
 
 st.set_page_config(page_title="Digit Recognizer", layout="wide")
 
-# Define improved CNN
 class ImprovedMNISTCNN(nn.Module):
     def __init__(self):
         super(ImprovedMNISTCNN, self).__init__()
@@ -84,7 +83,6 @@ def train_model():
             loss.backward()
             optimizer.step()
 
-        # Validation
         model.eval()
         correct = 0
         total = 0
@@ -125,26 +123,19 @@ def preprocess_canvas(canvas_result):
     if canvas_result.image_data is None:
         return None, None
     img = canvas_result.image_data.astype(np.uint8)
-    # Take alpha if RGBA, else convert
     if img.shape[-1] == 4:
-        # Use alpha channel or convert to grayscale
         if np.all(img[:,:,:3] == img[:,:,0:1]):  # grayscale
             img = Image.fromarray(img[:,:,0]).convert('L')
         else:
             img = Image.fromarray(img).convert('L')
     else:
         img = Image.fromarray(img).convert('L')
-    # Canvas already white on black, so no inversion
-    # But we need to ensure digit is white (255) on black (0)
-    # The canvas gives white on black, so fine.
-    # Center and resize
     img_array = np.array(img)
     non_zero = np.where(img_array > 50)
     if len(non_zero[0]) == 0:
         return None, None  # blank
     y_min, y_max = np.min(non_zero[0]), np.max(non_zero[0])
     x_min, x_max = np.min(non_zero[1]), np.max(non_zero[1])
-    # Add padding
     pad = 5
     y_min = max(0, y_min - pad)
     y_max = min(img_array.shape[0], y_max + pad)
@@ -168,7 +159,6 @@ def preprocess_upload(image, invert=True):
         image = image.convert('L')
     if invert:
         image = Image.eval(image, lambda x: 255 - x)  # make white on black
-    # Same centering as above
     img_array = np.array(image)
     non_zero = np.where(img_array > 50)
     if len(non_zero[0]) == 0:
@@ -192,7 +182,6 @@ def preprocess_upload(image, invert=True):
     tensor = transform(new_img).unsqueeze(0)
     return tensor, new_img
 
-# Main app
 def main():
     st.title("MNIST Digit Recognition System")
     st.write("Draw a digit or upload an image. The model achieves >99% accuracy on MNIST.")
@@ -201,7 +190,6 @@ def main():
         st.header("Settings")
         conf_thresh = st.slider("Confidence threshold", 0.0, 1.0, 0.7)
         show_proc = st.checkbox("Show preprocessed image", True)
-        # For uploaded images, allow inversion toggle
         invert_upload = st.checkbox("Invert uploaded image colors (if digit is dark on light)", True)
 
     model, device = get_model()
